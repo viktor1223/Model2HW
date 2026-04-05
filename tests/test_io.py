@@ -73,10 +73,10 @@ class TestAnalyzeIOOffAccelerator:
 
 class TestIOBandwidthScaling:
     def test_required_bw_scales_with_tok_s(self):
-        from tests.conftest import _make_spec
+        from hardware_feasibility.models.hf_config_loader import load_from_known_family
 
-        spec_10 = _make_spec("llama3-8b", target_tokens_per_sec=10.0)
-        spec_20 = _make_spec("llama3-8b", target_tokens_per_sec=20.0)
+        spec_10 = load_from_known_family("llama3-8b", target_tokens_per_sec=10.0)
+        spec_20 = load_from_known_family("llama3-8b", target_tokens_per_sec=20.0)
         io_10 = analyze_io(spec_10)
         io_20 = analyze_io(spec_20)
         assert io_20.required_io_bandwidth_bytes_per_sec == pytest.approx(

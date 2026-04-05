@@ -58,17 +58,17 @@ class TestEstimateKvCache:
 
     def test_kv_scales_with_batch_size(self):
         """KV cache should scale linearly with batch size."""
-        from tests.conftest import _make_spec
+        from hardware_feasibility.models.hf_config_loader import load_from_known_family
 
-        spec1 = _make_spec("llama3-8b", batch_size=1)
-        spec4 = _make_spec("llama3-8b", batch_size=4)
+        spec1 = load_from_known_family("llama3-8b", batch_size=1)
+        spec4 = load_from_known_family("llama3-8b", batch_size=4)
         assert estimate_kv_cache(spec4) == 4 * estimate_kv_cache(spec1)
 
     def test_kv_scales_with_context_length(self):
-        from tests.conftest import _make_spec
+        from hardware_feasibility.models.hf_config_loader import load_from_known_family
 
-        spec_2k = _make_spec("llama3-8b", context_length=2048)
-        spec_4k = _make_spec("llama3-8b", context_length=4096)
+        spec_2k = load_from_known_family("llama3-8b", context_length=2048)
+        spec_4k = load_from_known_family("llama3-8b", context_length=4096)
         assert estimate_kv_cache(spec_4k) == 2 * estimate_kv_cache(spec_2k)
 
 
@@ -83,10 +83,10 @@ class TestEstimateActivationBuffer:
 
     def test_prefill_dominated(self, llama3_8b_fp16: ModelSpec):
         """Activation buffer should grow with prefill_length."""
-        from tests.conftest import _make_spec
+        from hardware_feasibility.models.hf_config_loader import load_from_known_family
 
-        short = _make_spec("llama3-8b", prefill_length=128)
-        long = _make_spec("llama3-8b", prefill_length=1024)
+        short = load_from_known_family("llama3-8b", prefill_length=128)
+        long = load_from_known_family("llama3-8b", prefill_length=1024)
         assert estimate_activation_buffer(long) > estimate_activation_buffer(short)
 
 

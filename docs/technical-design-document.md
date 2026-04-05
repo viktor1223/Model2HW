@@ -6,6 +6,11 @@ This document is the complete engineering specification for evolving Model2HW fr
 
 Read the feasibility study first (`docs/agentic-codesign-feasibility-study.md`). This document assumes you understand the "why." Here we only cover the "what" and "how."
 
+**Companion documents**:
+
+- `docs/implementation-checklist.md` - Running status of all 85 features across 10 phases
+- `docs/progress-log.md` - Engineering decisions, experimental results, and open questions (paper-ready)
+
 ---
 
 ## Design Principle: LLM Only Where Absolutely Necessary
@@ -27,6 +32,44 @@ Layer-split enumeration
 ```
 
 This boundary is a hard constraint, not a guideline. Using an LLM for tasks in the deterministic layer adds latency, cost, and hallucination risk for zero benefit. Phases 1-5 run in milliseconds, produce fully reproducible results, and cost nothing per invocation.
+
+---
+
+## Evaluation Tiers: Validate Before Real Hardware
+
+Before any design is deployed to physical silicon, it must pass through a tiered evaluation pipeline. Each tier increases fidelity and cost. A design only advances to the next tier if it passes the current one. This eliminates wasted time and, critically, removes the need to purchase an FPGA during development.
+
+| Tier | Tool | Cost | Runtime | Accuracy vs. Real HW | What It Validates |
+|------|------|------|---------|----------------------|-------------------|
+| 1 | Model2HW analytical models | Free | Milliseconds | Memory: exact. Bandwidth: conservative (10-20% margin). Compute: order-of-magnitude. | Does the model fit? Is bandwidth feasible? Initial precision selection. |
+| 2 | Vitis HLS C-simulation + synthesis reports | Free (Vitis download) | Minutes per kernel | Resource utilization: <5% error. Latency estimates: 5-15% error. Timing: exact for target clock. | Per-operator resource consumption, cycle-accurate latency per kernel, timing closure at target frequency. |
+| 3 | Full RTL simulation (Vivado XSIM / Verilator) | Free | Hours per operator | Cycle-exact for simulated operators | Bit-exact functional correctness, cycle-level pipeline behavior, memory access patterns. |
+| 4 | FPGA-in-the-cloud (AWS F1, Nimbix, AMD University Program) | ~$1.65/hr (F1) | Real-time | Ground truth | End-to-end latency, actual throughput, thermal behavior, real memory controller effects. |
+
+### Tier Advancement Rules
+
+* Tier 1 is mandatory for every configuration. If Model2HW says it does not fit, stop.
+* Tier 2 requires Vitis HLS installed locally (free download, no license for simulation and synthesis reports). Run C-simulation for functional correctness, then synthesis for resource and timing estimates.
+* Tier 3 is optional and recommended only for individual operators where Tier 2 latency estimates seem suspect or where pipeline stalls need investigation.
+* Tier 4 is the final validation before declaring a design production-ready. Use cloud FPGAs to avoid purchasing hardware.
+
+### Where Each Tier Maps to Implementation Phases
+
+* Phases 1-4 produce configurations validated at Tier 1 (analytical).
+* Phase 6 (HLS Synthesis Feedback) produces Tier 2 validation data.
+* Phase 7 (Agentic Kernel Optimizer) targets Tier 2 optimization with optional Tier 3 deep-dives.
+* Phase 10 (End-to-End Pipeline) orchestrates full Tier 1 through Tier 4 progression.
+
+### Accuracy Summary
+
+| Metric | Tier 1 vs. Tier 4 | Tier 2 vs. Tier 4 |
+|--------|--------------------|--------------------|
+| Memory footprint | Exact (formula-based) | Exact (synthesis report) |
+| Bandwidth requirement | Conservative, 10-20% overshoot | 5-15% error |
+| Resource utilization (LUTs, DSPs, BRAM) | Not available | <5% error |
+| Latency per operator | Not available | 5-15% error |
+| End-to-end throughput | Order-of-magnitude estimate | Within 15-20% |
+| Timing closure | Not available | Exact for target clock |
 
 ---
 

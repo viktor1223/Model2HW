@@ -31,6 +31,27 @@ class BoardSpec:
     # Notes
     notes: str = ""
 
+    # On-chip resources (FPGA-specific)
+    bram_kb: Optional[int] = None       # Total Block RAM in KB
+    uram_kb: Optional[int] = None       # Total UltraRAM in KB (Xilinx specific)
+    dsp_slices: Optional[int] = None    # DSP slice count
+    lut_count: Optional[int] = None     # LUT count (in thousands)
+
+    # Memory hierarchy
+    memory_type: str = "ddr4"           # "ddr4", "ddr5", "hbm2", "hbm2e", "lpddr4", "lpddr5", "unified"
+    memory_channels: int = 1            # Number of memory channels
+
+    # Compute architecture
+    has_ai_engines: bool = False         # Versal AI Engines or similar
+    ai_engine_count: Optional[int] = None
+
+    @property
+    def on_chip_memory_kb(self) -> int:
+        """Total on-chip fast memory (BRAM + URAM) in KB."""
+        bram = self.bram_kb or 0
+        uram = self.uram_kb or 0
+        return bram + uram
+
 
 # ---------------------------------------------------------------------------
 # Built-in board database.  Expand as needed.
@@ -55,6 +76,12 @@ _register(BoardSpec(
     host_link_bandwidth_gbps=2.0,
     tdp_watts=30,
     notes="Zynq UltraScale+ ZU7EV. 504 DSP slices. Typical edge FPGA.",
+    bram_kb=312,
+    uram_kb=96,
+    dsp_slices=1728,
+    lut_count=504,
+    memory_type="ddr4",
+    memory_channels=1,
 ))
 
 _register(BoardSpec(
@@ -67,6 +94,14 @@ _register(BoardSpec(
     host_link_bandwidth_gbps=16.0,
     tdp_watts=75,
     notes="Versal AI Core XCVC1902. 400 AI Engines. DDR4 + LPDDR4.",
+    bram_kb=967,
+    uram_kb=0,
+    dsp_slices=1968,
+    lut_count=899,
+    memory_type="ddr4",
+    memory_channels=2,
+    has_ai_engines=True,
+    ai_engine_count=400,
 ))
 
 _register(BoardSpec(
@@ -80,6 +115,12 @@ _register(BoardSpec(
     host_link_bandwidth_gbps=16.0,
     tdp_watts=225,
     notes="Datacenter FPGA. 4x DDR4 banks. Large fabric.",
+    bram_kb=2688,
+    uram_kb=1280,
+    dsp_slices=12288,
+    lut_count=1727,
+    memory_type="ddr4",
+    memory_channels=4,
 ))
 
 _register(BoardSpec(
@@ -93,6 +134,12 @@ _register(BoardSpec(
     host_link_bandwidth_gbps=32.0,
     tdp_watts=150,
     notes="HBM2-based Alveo. High bandwidth for streaming workloads.",
+    bram_kb=2016,
+    uram_kb=960,
+    dsp_slices=9024,
+    lut_count=1303,
+    memory_type="hbm2",
+    memory_channels=32,
 ))
 
 _register(BoardSpec(
@@ -105,6 +152,14 @@ _register(BoardSpec(
     host_link_bandwidth_gbps=64.0,
     tdp_watts=150,
     notes="Versal AI Edge series with HBM and AI Engines.",
+    bram_kb=1344,
+    uram_kb=576,
+    dsp_slices=3984,
+    lut_count=1218,
+    memory_type="hbm2e",
+    memory_channels=8,
+    has_ai_engines=True,
+    ai_engine_count=304,
 ))
 
 # ---- Intel FPGAs ----
@@ -119,6 +174,12 @@ _register(BoardSpec(
     host_link_bandwidth_gbps=64.0,
     tdp_watts=150,
     notes="Agilex 7 FPGA with HBM2e. High-bandwidth FPGA for AI inference.",
+    bram_kb=7404,
+    uram_kb=0,
+    dsp_slices=4510,
+    lut_count=949,
+    memory_type="hbm2e",
+    memory_channels=16,
 ))
 
 _register(BoardSpec(
@@ -131,6 +192,12 @@ _register(BoardSpec(
     host_link_bandwidth_gbps=16.0,
     tdp_watts=225,
     notes="AI-optimized FPGA with HBM2 and dedicated AI tensor blocks.",
+    bram_kb=10960,
+    uram_kb=0,
+    dsp_slices=5760,
+    lut_count=1866,
+    memory_type="hbm2",
+    memory_channels=32,
 ))
 
 # ---- NVIDIA GPUs (reference points) ----
@@ -146,6 +213,8 @@ _register(BoardSpec(
     host_link_bandwidth_gbps=8.0,
     tdp_watts=25,
     notes="Edge SoC. Unified memory (shared CPU/GPU). Ampere GPU + DLA.",
+    memory_type="lpddr5",
+    memory_channels=8,
 ))
 
 _register(BoardSpec(
@@ -159,6 +228,8 @@ _register(BoardSpec(
     host_link_bandwidth_gbps=16.0,
     tdp_watts=60,
     notes="Top-end Jetson. Unified LPDDR5 memory.",
+    memory_type="lpddr5",
+    memory_channels=16,
 ))
 
 _register(BoardSpec(
@@ -172,6 +243,8 @@ _register(BoardSpec(
     host_link_bandwidth_gbps=64.0,
     tdp_watts=300,
     notes="Datacenter GPU. Reference high-end point.",
+    memory_type="hbm2e",
+    memory_channels=5,
 ))
 
 _register(BoardSpec(
@@ -185,6 +258,8 @@ _register(BoardSpec(
     host_link_bandwidth_gbps=32.0,
     tdp_watts=450,
     notes="Consumer GPU. High compute and bandwidth.",
+    memory_type="ddr6x",
+    memory_channels=12,
 ))
 
 # ---- Edge AI NPUs ----
@@ -237,6 +312,8 @@ _register(BoardSpec(
     host_link_bandwidth_gbps=4.0,
     tdp_watts=25,
     notes="Generic mid-range FPGA with single DDR4 channel. Rough baseline.",
+    memory_type="ddr4",
+    memory_channels=1,
 ))
 
 _register(BoardSpec(
@@ -249,6 +326,8 @@ _register(BoardSpec(
     host_link_bandwidth_gbps=8.0,
     tdp_watts=40,
     notes="Generic FPGA with dual DDR4 channels.",
+    memory_type="ddr4",
+    memory_channels=2,
 ))
 
 

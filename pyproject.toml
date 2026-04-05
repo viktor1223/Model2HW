@@ -11,7 +11,9 @@ dependencies = []
 
 [project.optional-dependencies]
 hub = ["huggingface_hub>=0.20"]
+agents = ["openai>=1.0"]
 dev = ["pytest>=7.0"]
+all = ["huggingface_hub>=0.20", "openai>=1.0"]
 
 [project.scripts]
 model2hw = "hardware_feasibility.cli:main"

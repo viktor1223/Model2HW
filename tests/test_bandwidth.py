@@ -50,10 +50,10 @@ class TestAnalyzeBandwidth:
 
     def test_scales_linearly_with_target_tok_s(self):
         """Doubling target tok/s should double required bandwidth."""
-        from tests.conftest import _make_spec
+        from hardware_feasibility.models.hf_config_loader import load_from_known_family
 
-        spec_10 = _make_spec("llama3-8b", target_tokens_per_sec=10.0)
-        spec_20 = _make_spec("llama3-8b", target_tokens_per_sec=20.0)
+        spec_10 = load_from_known_family("llama3-8b", target_tokens_per_sec=10.0)
+        spec_20 = load_from_known_family("llama3-8b", target_tokens_per_sec=20.0)
         bw_10 = analyze_bandwidth(spec_10)
         bw_20 = analyze_bandwidth(spec_20)
         assert bw_20.required_bandwidth_bytes_per_sec == pytest.approx(

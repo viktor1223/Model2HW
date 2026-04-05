@@ -48,10 +48,10 @@ class TestEstimateFlopsPrefix:
         assert prefill > per_tok * 10
 
     def test_scales_with_prefill_length(self):
-        from tests.conftest import _make_spec
+        from hardware_feasibility.models.hf_config_loader import load_from_known_family
 
-        short = _make_spec("llama3-8b", prefill_length=128)
-        long = _make_spec("llama3-8b", prefill_length=512)
+        short = load_from_known_family("llama3-8b", prefill_length=128)
+        long = load_from_known_family("llama3-8b", prefill_length=512)
         f_short = estimate_flops_prefill(short)
         f_long = estimate_flops_prefill(long)
         assert f_long > f_short

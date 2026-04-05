@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<profile>
+  <UserAssignments>
+    <TargetClockPeriod>5.000</TargetClockPeriod>
+    <Part>xcvc1902-vsva2197-2MP-e-S</Part>
+    <TopModelName>matmul_int8</TopModelName>
+  </UserAssignments>
+  <PerformanceEstimates>
+    <SummaryOfTimingAnalysis>
+      <EstimatedClockPeriod>5.000</EstimatedClockPeriod>
+      <AchievedClockPeriod>4.350</AchievedClockPeriod>
+    </SummaryOfTimingAnalysis>
+    <SummaryOfOverallLatency>
+      <Best-caseLatency>1024</Best-caseLatency>
+      <Worst-caseLatency>2048</Worst-caseLatency>
+      <Best-caseRealTimeLatency>5.120 us</Best-caseRealTimeLatency>
+      <Worst-caseRealTimeLatency>10.240 us</Worst-caseRealTimeLatency>
+    </SummaryOfOverallLatency>
+  </PerformanceEstimates>
+  <AreaEstimates>
+    <Resources>
+      <BRAM_18K>64</BRAM_18K>
+      <DSP>128</DSP>
+      <FF>45000</FF>
+      <LUT>32000</LUT>
+    </Resources>
+    <AvailableResources>
+      <BRAM_18K>1934</BRAM_18K>
+      <DSP>1968</DSP>
+      <FF>1799680</FF>
+      <LUT>899840</LUT>
+    </AvailableResources>
+  </AreaEstimates>
+</profile>

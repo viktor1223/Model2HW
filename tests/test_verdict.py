@@ -147,11 +147,11 @@ class TestVerdictResult:
 class TestVerdictEdgeCases:
     def test_tight_memory_reports_warning(self):
         """When headroom < 15% of total, a warning about tightness should appear."""
-        from tests.conftest import _make_spec
+        from hardware_feasibility.models.hf_config_loader import load_from_known_family
 
-        spec = _make_spec(
+        spec = load_from_known_family(
             "qwen2-0.5b",
-            weight_precision=Precision.FP16,
+            weight_precision="fp16",
             context_length=2048,
         )
         mem, bw, comp, io = _full_profiles(spec)

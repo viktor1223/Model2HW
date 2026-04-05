@@ -99,6 +99,26 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--target-link-gbps", type=float, default=None,
                     help="Custom target host-link bandwidth in GB/s.")
 
+    # --- Sweep ---
+    p.add_argument("--sweep", action="store_true",
+                   help="Sweep all precision combinations and rank by feasibility.")
+
+    # --- Sensitivity ---
+    p.add_argument("--sensitivity", action="store_true",
+                   help="Run sensitivity analysis showing which bottleneck dominates.")
+
+    # --- Recommend ---
+    p.add_argument("--recommend", action="store_true",
+                   help="Recommend the best configuration for the given model and board.")
+
+    # --- Decompose ---
+    p.add_argument("--decompose", action="store_true",
+                   help="Propose multi-device decomposition if model doesn't fit on --board.")
+
+    # --- Full pipeline ---
+    p.add_argument("--full-pipeline", action="store_true",
+                   help="Run the complete analysis + optimization pipeline.")
+
     # --- Output ---
     p.add_argument("--json", action="store_true", help="Output as JSON instead of report.")
     p.add_argument("--output", "-o", type=str, default=None,
@@ -173,6 +193,132 @@ def run(argv: list[str] | None = None) -> None:
         target_bandwidth_gbps=target_bw,
         target_link_bandwidth_gbps=target_link,
     )
+
+    # --- Precision sweep ---
+    if args.sweep:
+        from .analysis.sweep import run_precision_sweep
+        from .outputs.report import format_sweep_report
+        from .outputs.json_export import format_sweep_json
+
+        sweep = run_precision_sweep(
+            spec,
+            target_memory_gb=target_mem,
+            target_bandwidth_gbps=target_bw,
+            target_link_bandwidth_gbps=target_link,
+        )
+        if args.json:
+            output = json.dumps(format_sweep_json(sweep), indent=2)
+        else:
+            output = format_sweep_report(sweep)
+
+        if args.output:
+            Path(args.output).write_text(output)
+            print(f"Sweep report written to {args.output}")
+        else:
+            print(output)
+        return
+
+    # --- Sensitivity analysis ---
+    if args.sensitivity:
+        from .analysis.sensitivity import analyze_sensitivity
+        from .outputs.report import format_sensitivity_report
+        from .outputs.json_export import format_sensitivity_json
+
+        if target_mem is None or target_bw is None or target_link is None:
+            parser.error("--sensitivity requires --board or explicit --target-memory-gb, --target-bw-gbps, and --target-link-gbps.")
+            return
+
+        target_tops = None
+        if args.board:
+            target_tops = board.peak_tops_int8
+
+        sensitivity = analyze_sensitivity(
+            spec, mem, bw, compute, io,
+            target_memory_gb=target_mem,
+            target_bandwidth_gbps=target_bw,
+            target_link_bandwidth_gbps=target_link,
+            target_tops=target_tops,
+        )
+        if args.json:
+            output = json.dumps(format_sensitivity_json(sensitivity), indent=2)
+        else:
+            output = format_sensitivity_report(sensitivity)
+
+        if args.output:
+            Path(args.output).write_text(output)
+            print(f"Sensitivity report written to {args.output}")
+        else:
+            print(output)
+        return
+
+    # --- Configuration recommendation ---
+    if args.recommend:
+        from .analysis.recommender import recommend_configuration
+        from .outputs.report import format_recommend_report
+        from .outputs.json_export import format_recommend_json
+
+        if not args.board:
+            parser.error("--recommend requires --board.")
+            return
+
+        recommendation = recommend_configuration(spec, board)
+        if args.json:
+            output = json.dumps(format_recommend_json(recommendation), indent=2)
+        else:
+            output = format_recommend_report(recommendation)
+
+        if args.output:
+            Path(args.output).write_text(output)
+            print(f"Recommendation written to {args.output}")
+        else:
+            print(output)
+        return
+
+    # --- Decomposition ---
+    if args.decompose:
+        from .analysis.decomposition import plan_decomposition
+        from .outputs.report import format_decomposition_report
+        from .outputs.json_export import format_decomposition_json
+
+        if not args.board:
+            parser.error("--decompose requires --board.")
+            return
+
+        decomp = plan_decomposition(spec, board)
+        if args.json:
+            output = json.dumps(format_decomposition_json(decomp), indent=2)
+        else:
+            output = format_decomposition_report(decomp)
+
+        if args.output:
+            Path(args.output).write_text(output)
+            print(f"Decomposition report written to {args.output}")
+        else:
+            print(output)
+        return
+
+    # --- Full pipeline ---
+    if args.full_pipeline:
+        from .pipeline import run_full_pipeline
+        from .outputs.report import format_pipeline_report
+        from .outputs.json_export import format_pipeline_json
+
+        if not args.board:
+            parser.error("--full-pipeline requires --board.")
+            return
+
+        pipeline_result = run_full_pipeline(spec, board)
+        if args.json:
+            output = json.dumps(format_pipeline_json(pipeline_result), indent=2)
+        else:
+            output = format_pipeline_report(pipeline_result)
+
+        if args.output:
+            Path(args.output).write_text(output)
+            print(f"Pipeline report written to {args.output}")
+        else:
+            print(output)
+        return
 
     # --- Hardware matching ---
     matches = None
